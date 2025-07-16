@@ -1,15 +1,19 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/William-Dias-Marcos/CRUD-Golang/src/configuration/logger"
 	"github.com/William-Dias-Marcos/CRUD-Golang/src/configuration/validation"
 	"github.com/William-Dias-Marcos/CRUD-Golang/src/controller/model/request"
-	"github.com/William-Dias-Marcos/CRUD-Golang/src/controller/model/response"
+	"github.com/William-Dias-Marcos/CRUD-Golang/src/model"
+	"github.com/William-Dias-Marcos/CRUD-Golang/src/model/service"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+)
+
+var (
+	UserDomainInterface model.UserDomainInterface
 )
 
 func CreateUser(c *gin.Context){
@@ -28,17 +32,24 @@ func CreateUser(c *gin.Context){
 		c.JSON(restErr.Code, restErr)
 		return
 	}
-	fmt.Println(userRequest)
 
-	response := response.UserResponse{
-		ID: "123456789",
-		Name: userRequest.Name,
-		Email: userRequest.Email,
-		Age: userRequest.Age,
+	domain := model.NewUserDomain(
+		userRequest.Email,
+		userRequest.Password,
+		userRequest.Name,
+		userRequest.Age,
+	)
+
+	service := service.NewUserDomainService()
+
+	if err := service.CreateUser(domain); err !=nil {
+		c.JSON(err.Code, err)
+		return
 	}
+
 
 	logger.Info("CreateUser controller executed successfully",
 		zap.String("journey", "createUser"))
 
-	c.JSON(http.StatusOK, response)
+	c.String(http.StatusOK, "")
 }
